@@ -1,6 +1,6 @@
 #Distance between two sets.
-#Version:0.1.1
-#Last Update:6/12/2019
+#Version:0.1.2
+#Last Update:6/26/2019
 
 #
 #
@@ -41,9 +41,10 @@ calculate_distance_between_two_sets <- function(setA, setB) {
   td <- 0
   r <- matrix(nrow = lengths(setA) * lengths(setB), ncol = 3)
   
+  #setA to setB
   for(i in 1:lengths(setA)) {
     #print(i)
-
+    
     for(j in 1:lengths(setB)) {
       #print(j)
       temp <- get.shortest.paths(graph, setA[[1]][i], setB[[1]][j])
@@ -54,21 +55,86 @@ calculate_distance_between_two_sets <- function(setA, setB) {
       #print((i - 1) * lengths(setB) + j)
     }
     #print(td)
+    #print(lengths(setA))
+    #print(lengths(setB))
   }
   
-  record <<- r
-  paste("The total between setA and setB is: ", td, sep="")
+  a_to_b <<- as.data.frame(r)
+  print(paste("The total distance from ", colnames(setA), " to ", colnames(setB), " is: ", td, sep=""))
+  
+  #setB to setA
+  td <- 0
+  
+  for(i in 1:lengths(setB)) {
+    #print(i)
+    
+    for(j in 1:lengths(setA)) {
+      #print(j)
+      temp <- get.shortest.paths(graph, setB[[1]][i], setA[[1]][j])
+      td <- td + lengths(temp[[1]]) - 1
+      #print(td)
+      
+      r[(i - 1) * lengths(setA) + j,] <- c(setB[[1]][i], setA[[1]][j], lengths(temp[[1]]) - 1)
+      #print((i - 1) * lengths(setB) + j)
+    }
+    #print(td)
+    #print(lengths(setA))
+    #print(lengths(setB))
+  }
+  
+  b_to_a <<- as.data.frame(r)
+  print(paste("The total distance from ", colnames(setB), " to ", colnames(setA), " is: ", td, sep=""))
+}
+
+#show paths between setA and setB
+show_paths <- function(setA, setB) {
+  #show paths from setA to setB
+  path <- NULL
+  if(nrow(subset(a_to_b, distance > 0))) {
+    path <- cbind(subset(a_to_b, distance > 0), path = 0)
+    
+    for(i in 1:nrow(path)) {
+      path[i, 4] <- toString(get.shortest.paths(graph, path[i, 1], path[i, 2])[["vpath"]][[1]])
+    }
+    
+    a_to_b_path <<- path
+  }else {
+    a_to_b_path <<- path
+    print(paste("There is no path from ", colnames(setA), " to ", colnames(setB), sep=""))
+  }
+  
+  #show paths from setB to setA
+  path <- NULL
+  if(nrow(subset(b_to_a, distance > 0))) {
+    path <- cbind(subset(b_to_a, distance > 0), path = 0)
+    
+    for(i in 1:nrow(path)) {
+      path[i, 4] <- toString(get.shortest.paths(graph, path[i, 1], path[i, 2])[["vpath"]][[1]])
+    }
+    
+    b_to_a_path <<- path
+  }else {
+    b_to_a_path <<- path
+    print(paste("There is no path from ", colnames(setB), " to ", colnames(setA), sep=""))
+  }
 }
 
 #calculate distance between two assignees
 calculate_distance_between_two_assignees <- function(assigneeA, assigneeB) {
-  set_a <- which(assignee == assigneeA, arr.ind = TRUE)
-  set_a <- set_a[, -2]
-  set_a <<- as.data.frame(assignee[set_a, 3])
-  set_b <- which(assignee == assigneeB, arr.ind = TRUE)
-  set_b <- set_b[, -2]
-  set_b <<- as.data.frame(assignee[set_b, 3])
-  #calculate_distance_between_two_sets(set_a, set_b)
+  seta <- which(assignee == assigneeA, arr.ind = TRUE)
+  seta <- seta[, -2]
+  set_a <<- as.data.frame(assignee[seta, 3])
+  colnames(set_a) <<- assigneeA
+  setb <- which(assignee == assigneeB, arr.ind = TRUE)
+  setb <- setb[, -2]
+  set_b <<- as.data.frame(assignee[setb, 3])
+  colnames(set_b) <<- assigneeB
+  
+  calculate_distance_between_two_sets(set_a, set_b)
+  colnames(a_to_b) <<- c(assigneeA, assigneeB, "distance")
+  colnames(b_to_a) <<- c(assigneeB, assigneeA, "distance")
+  
+  show_paths(set_a, set_b)
 }
 
 #detect wheather exist cycles in a graph
