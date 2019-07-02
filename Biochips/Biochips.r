@@ -149,3 +149,15 @@ detect_cycle <- function(g) {
   
   cycles <<- cy
 }
+
+#find patent number with pajek label
+#note that column name of pajek label must be "vaule"
+find_patent_number <- function(pajek_label) {
+  return(assignee[assignee$value==pajek_label,1])
+}
+
+#find pajek label with patent number
+#note that column name of patent number must be "PN"
+find_pajek_label <- function(patent_number) {
+  return(assignee[assignee$PN==patent_number,3])
+}
