@@ -36,6 +36,20 @@ assignee <- read.csv(file.choose())
 #initialize set B
 #b <- read.csv(file.choose())
 
+#find distance between two sets
+find_distance_between_two_sets <- function(setA, setB) {
+  td <- 0
+  
+  for(i in 1:lengths(setA)) {
+    for(j in 1:lengths(setB)) {
+      temp <- get.shortest.paths(graph, setA[[1]][i], setB[[1]][j])
+      td <- td + lengths(temp[[1]]) - 1
+    }
+  }
+  
+  return(td)
+}
+
 #Calculate a total distance between two vectors.
 calculate_distance_between_two_sets <- function(setA, setB) {
   td <- 0
@@ -119,16 +133,19 @@ show_paths <- function(setA, setB) {
   }
 }
 
+#find assignee's patents
+find_patent <- function(name) {
+  set <- which(assignee == name, arr.ind = TRUE)
+  set <- set[, -2]
+  set <- as.data.frame(assignee[set, 3])
+  colnames(set) <- name
+  return(set)
+}
+
 #calculate distance between two assignees
 calculate_distance_between_two_assignees <- function(assigneeA, assigneeB) {
-  seta <- which(assignee == assigneeA, arr.ind = TRUE)
-  seta <- seta[, -2]
-  set_a <<- as.data.frame(assignee[seta, 3])
-  colnames(set_a) <<- assigneeA
-  setb <- which(assignee == assigneeB, arr.ind = TRUE)
-  setb <- setb[, -2]
-  set_b <<- as.data.frame(assignee[setb, 3])
-  colnames(set_b) <<- assigneeB
+  set_a <<- find_patent(assigneeA)
+  set_b <<- find_patent(assigneeB)
   
   calculate_distance_between_two_sets(set_a, set_b)
   colnames(a_to_b) <<- c(assigneeA, assigneeB, "distance")
@@ -160,4 +177,38 @@ find_patent_number <- function(pajek_label) {
 #note that column name of patent number must be "PN"
 find_pajek_label <- function(patent_number) {
   return(assignee[assignee$PN==patent_number,3])
+}
+
+#find all patent with each assignee
+find_all_patent_with_each_assignee <- function(as) {
+  assignee_ls <- NULL
+  assignees <- as[!duplicated((as$ASSIGNEE)),]
+  assignee_row <- nrow(assignees)
+  
+  for(a in 1:assignee_row) {
+    assignee_ls <- c(assignee_ls, as.data.frame(find_patent(toString(assignees[a,2]))))
+  }
+  
+  return(assignee_ls)
+}
+
+#find all distance among assignees
+find_all_distance_among_assignees <- function() {
+  distance_m <- as.data.frame(matrix(, nrow = length(assignee_list), ncol = length(assignee_list)))
+  
+  for(i in 1:length(assignee_list)) {
+    for(j in 1:length(assignee_list)) {
+      distance_m[i,j] <- find_distance_between_two_sets(as.data.frame(assignee_list[[i]]), as.data.frame(assignee_list[[j]]))
+      print(paste(assignee_list[[i]], assignee_list[[j]], distance_m[i,j], sep="   "))
+      distance_m[j,i] <- find_distance_between_two_sets(as.data.frame(assignee_list[[j]]), as.data.frame(assignee_list[[i]]))
+    }
+  }
+  
+  return(distance_m)
+}
+
+#calculate distance between all assignee
+calculate_distance_among_all_assignee <- function(a) {
+  assignee_list <<- find_all_patent_with_each_assignee(a)
+  distance_matrix <<- find_all_distance_among_assignees()
 }
