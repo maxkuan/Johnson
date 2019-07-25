@@ -210,5 +210,5 @@ find_all_distance_among_assignees <- function() {
 #calculate distance between all assignee
 calculate_distance_among_all_assignee <- function(a) {
   assignee_list <<- find_all_patent_with_each_assignee(a)
-  distance_matrix <<- find_all_distance_among_assignees()
+  #distance_matrix <<- find_all_distance_among_assignees()
 }
