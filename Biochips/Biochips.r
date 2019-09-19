@@ -15,7 +15,8 @@
 #
 
 #initailize packages
-library("igraph")
+library(igraph)
+library(compare)
 
 #initialize the network
 graph <- read.graph(file.choose(), format = "pajek")
@@ -36,6 +37,12 @@ assignee <- read.csv(file.choose())
 #initialize set B
 #b <- read.csv(file.choose())
 
+#find shortest path betweeb two sets
+find_shortest_path_between_two_sets <- function(intA, intB) {
+  temp <- get.shortest.paths(graph, intA, intB)
+  return(lengths(temp[[1]]) - 1)
+}
+
 #find distance between two sets
 find_distance_between_two_sets <- function(setA, setB) {
   td <- 0
@@ -46,6 +53,40 @@ find_distance_between_two_sets <- function(setA, setB) {
       td <- td + lengths(temp[[1]]) - 1
     }
   }
+  
+  return(td)
+}
+
+#find distance between two sets with apply
+find_distance_between_two_sets_with_apply <- function(setA, setB) {
+  td <- 0
+  
+  #if(any(compare(class(setA), class(data.frame())) == FALSE)) {
+  #  setA <- as.data.frame(setA)
+  #}
+  
+  #if(any(compare(class(setB), class(data.frame())) == FALSE)) {
+  #  setB <- as.data.frame(setB)
+  #}
+  
+  if(compare(class(setA), class(data.frame())) == FALSE) {
+    setA <- as.data.frame(setA)
+  }
+  
+  if(compare(class(setB), class(data.frame())) == FALSE) {
+    setB <- as.data.frame(setB)
+  }
+  
+  #for(i in 1:lengths(setA)) {
+  #  for(j in 1:lengths(setB)) {
+  #    temp <- find_shortest_path_between_two_sets(setA[[1]][i], setB[[1]][j])
+  #    td <- td + lengths(temp[[1]]) - 1
+  #  }
+  #}
+  
+  td <- sum(mapply(find_shortest_path_between_two_sets, setA, setB))
+  print(paste("setA is ", setA, sep=""))
+  print(paste("setB is ", setB, sep=""))
   
   return(td)
 }
@@ -198,11 +239,13 @@ find_all_distance_among_assignees <- function() {
   
   for(i in 1:length(assignee_list)) {
     for(j in 1:length(assignee_list)) {
-      distance_m[i,j] <- find_distance_between_two_sets(as.data.frame(assignee_list[[i]]), as.data.frame(assignee_list[[j]]))
+      distance_m[i,j] <- find_distance_between_two_sets_with_apply(as.data.frame(assignee_list[[i]]), as.data.frame(assignee_list[[j]]))
       print(paste(assignee_list[[i]], assignee_list[[j]], distance_m[i,j], sep="   "))
-      distance_m[j,i] <- find_distance_between_two_sets(as.data.frame(assignee_list[[j]]), as.data.frame(assignee_list[[i]]))
+      distance_m[j,i] <- find_distance_between_two_sets_with_apply(as.data.frame(assignee_list[[j]]), as.data.frame(assignee_list[[i]]))
     }
   }
+  
+  #distance_m <- as.data.frame(mapply(find_distance_between_two_sets_with_apply, assignee_list, assignee_list,SIMPLIFY = F))
   
   return(distance_m)
 }
